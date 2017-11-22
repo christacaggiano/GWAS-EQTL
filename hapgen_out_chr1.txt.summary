@@ -5,7 +5,7 @@
 ===================================================================
 
 Command line input is:
-./hapgen2 -m genetic_map_chr1_combined_b36.txt -l CEU.0908.chr1.legend -h CEU.0908.chr1.hap -o hapgen_out_chr1.txt -dl 791956 1 1.5 2.25 -int 691956 891956 -n 100 100 
+./hapgen2 -m genetic_map_chr1_combined_b36.txt -l CEU.0908.chr1.legend -h CEU.0908.chr1.hap -o hapgen_out_chr1.txt -dl 168262426 1 1.5 2.25 -int 168162426 168362426 
 
 FILE INPUTS
                                             haplotype file: CEU.0908.chr1.hap
@@ -16,13 +16,13 @@ FILE OUTPUTS
                                                output file: hapgen_out_chr1.txt
                                               summary file: hapgen_out_chr1.txt.summary
 PARAMETER INPUTS
-                                  no. controls to simulate: 100
-                                     no. cases to simulate: 100
-                                              disease loci: (1) 791956 
+                                  no. controls to simulate: 1
+                                     no. cases to simulate: 1
+                                              disease loci: (1) 168262426 
                                            disease alleles: (1) 1 
                              heterozygote/homozygote risks: (1) 1.50/2.25 
-                                                     lower: 691956
-                                                     upper: 891956
+                                                     lower: 168162426
+                                                     upper: 168362426
                                                         Ne: 11418
                                                      theta: -1
 
@@ -30,13 +30,13 @@ Reading genetic map file ... done
                                       number of rates read: 248796
 
 
-Reading haplotype and legend files: looking for SNPs in [691956, 891956] ... done
+Reading haplotype and legend files: looking for SNPs in [168162426, 168362426] ... done
                                       number of haplotypes: 112
                                    number of SNPs in total: 670051
-                                number of SNPs in interval: 1196
+                                number of SNPs in interval: 695
 
 
-Random seed set to 0.836926
+Random seed set to 0.459822
 theta not set, so setting to a default value of 0.188673
 
 Processing disease loci ... done 
@@ -53,15 +53,4 @@ writing output file hapgen_out_chr1.txt.cases.gen
 writing output file hapgen_out_chr1.txt.controls.sample
 writing output file hapgen_out_chr1.txt.cases.sample
 
-
-The pvalues and effect sizes of each disease SNP is:
-
-Disease_locus_index           beta        beta_se         pvalue
-            351            0.06406        0.07576         0.8572
-
-
-The pvalue for the full disease model is 0.8572:
-Disease_locus_index           beta        beta_se
-            351            0.06406        0.07576
-
-HAPGEN took 123 seconds to complete. Have a nice day! 
+HAPGEN took 121 seconds to complete. Have a nice day! 
