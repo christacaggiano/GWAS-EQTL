@@ -5,7 +5,7 @@
 ===================================================================
 
 Command line input is:
-./hapgen2 -m genetic_map_chr1_combined_b36.txt -l CEU.0908.chr1.legend -h CEU.0908.chr1.hap -o hapgen_out_chr1.txt -dl 168262426 1 1.5 2.25 -int 168162426 168362426 
+./hapgen2 -m genetic_map_chr1_combined_b36.txt -l CEU.0908.chr1.legend -h CEU.0908.chr1.hap -o hapgen_out_chr1.txt -dl 168262426 1 1.5 2.25 -int 168162426 168362426 -n 100 100 
 
 FILE INPUTS
                                             haplotype file: CEU.0908.chr1.hap
@@ -16,8 +16,8 @@ FILE OUTPUTS
                                                output file: hapgen_out_chr1.txt
                                               summary file: hapgen_out_chr1.txt.summary
 PARAMETER INPUTS
-                                  no. controls to simulate: 1
-                                     no. cases to simulate: 1
+                                  no. controls to simulate: 100
+                                     no. cases to simulate: 100
                                               disease loci: (1) 168262426 
                                            disease alleles: (1) 1 
                              heterozygote/homozygote risks: (1) 1.50/2.25 
@@ -36,7 +36,7 @@ Reading haplotype and legend files: looking for SNPs in [168162426, 168362426] .
                                 number of SNPs in interval: 695
 
 
-Random seed set to 0.459822
+Random seed set to 0.45367
 theta not set, so setting to a default value of 0.188673
 
 Processing disease loci ... done 
@@ -53,4 +53,15 @@ writing output file hapgen_out_chr1.txt.cases.gen
 writing output file hapgen_out_chr1.txt.controls.sample
 writing output file hapgen_out_chr1.txt.cases.sample
 
-HAPGEN took 121 seconds to complete. Have a nice day! 
+
+The pvalues and effect sizes of each disease SNP is:
+
+Disease_locus_index           beta        beta_se         pvalue
+            286             0.2111        0.08683         0.3583
+
+
+The pvalue for the full disease model is 0.3583:
+Disease_locus_index           beta        beta_se
+            286             0.2111        0.08683
+
+HAPGEN took 137 seconds to complete. Have a nice day! 
