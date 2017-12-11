@@ -1,0 +1,189 @@
+library(coloc)
+library(getopt)
+
+#set directory
+# setwd("~/Documents/UCSF_year1/biostats/GWAS-EQTL/")
+
+standardize <- function(X){
+  return((X-mean(X))/sd(X));
+}
+#'generate' outputs the vector of phenotypes
+generate <- function(X, indexCausal) {
+  X<-apply(X, 2, standardize)
+  X[is.na(X)] <- 0
+  p = ncol(X);
+  n = nrow(X);
+  
+  beta = rep(0,p);
+  beta[indexCausal] = 0.1;
+  
+  Y = X %*% beta;
+  sigma=sqrt(1-var(Y)); #This is the sigma_g
+  Y = Y + rnorm(n, 0, sigma);
+  return(Y);
+}
+
+#creates linear model based on simulated phenotype and genotype data
+myLM <- function(Y,X){
+  p=ncol(X);
+  n=nrow(X)
+  beta = varbeta = stat= pval <- rep(0,p);
+  for(i in 1:p){
+    model = lm(Y~X[,i])
+    pval[i] = coef(summary(model))[,4][2]
+    beta[i] = coef(summary(model))[,1][2];
+    varbeta[i] = coef(summary(model))[,2][2]^2;
+    stat[i] = coef(summary(model))[,3][2];
+  }
+  result <- list(beta, varbeta, pval, stat);
+  names(result) <- c("beta", "sdbeta", "pval", "Fscore");
+  result
+}
+
+#Not fully sure what this all does - generates an interface to input data?
+#spec = matrix(c(
+ # 'verbose', 'v', 2, "integer",
+  #'help' , 'h', 0, "logical",
+  #'complex' , 'c', 1, "integer",
+  #'colocalize' , 's', 1, "integer",
+  #'output' , 'o', 1, "character",
+  #'input', 'i', 1, "character"
+#), byrow=TRUE, ncol=4);
+
+#opt = getopt(spec);
+
+#if (!is.null(opt$help)) {
+#  cat(paste(getopt(spec, usage=T),"\n"));
+#  q();
+#}
+
+
+#import haps data
+hapscase = read.table("evensmaller.txt")
+hapscont = read.table("evensmaller.txt")
+
+#combine adjacent columns corresponding to individuals, transpose to make each column a SNP
+hapCount = ncol(hapscase);
+X = (hapscase[,seq(1,hapCount,2)]+ hapscase[,seq(2,hapCount,2)])
+X = t(X);
+Xgwas = X
+XX = (hapscont[,seq(1,hapCount,2)]+ hapscont[,seq(2,hapCount,2)])
+XX = t(XX)
+Xeqtl = XX
+
+#Label columns so SNP ID from input matches after filtering
+SNPids = paste("SNP", seq(1,ncol(Xgwas)),sep="") 
+colnames(Xgwas) = colnames(Xeqtl) = SNPids
+
+#calculate MAFs, then filter out SNPs w/ MAF<=.01 and monomorphic alleles
+maf1 = apply(Xgwas/2, 2, mean);
+lowmaf = which(maf1<=0.01)
+monomorphic = which(maf1==1)
+discard = sort(c(lowmaf,monomorphic), decreasing=FALSE)
+Xgwas <- Xgwas[,-discard]
+Xeqtl <- Xeqtl[,-discard]
+
+#Set these variables for running the above functions
+nInd = nrow(Xgwas);
+nSNP = ncol(Xgwas);
+
+#Reset SNPids to reflect filtering - this variable can then be used to label output files
+SNPids = colnames(Xgwas)
+
+#Make LD Matrices
+LD = cor(Xgwas);
+# LDeqtl = cor(Xeqtl);
+
+#saveLD
+write.table(LD, file="LDgwas.txt",sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE);
+# write.table(LDeqtl, file="LDeqtl.txt",sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE);
+
+# ##Decide what type of data to generate
+# ##coloc==F GWAS and eQTL variants do not colocalize
+# ##coloc==T GWAS and eQTL variants do colocalize
+# ##hard==T  This locus is hard so the two causal variants will have high LD.
+# ##hard==F  This locus is easy so the two causal variants will have low LD.
+# #if(hard==T && coloc==F) {
+#  # diag(LD) = -0.00001
+# #  maxIndex =  which(LD==max(abs(LD)), arr.ind=T) 
+#  # gwasCausal = maxIndex[1];
+#   #eqtlCausal = maxIndex[2];
+# } #else if (hard == F && coloc==F) {
+#   #minIndex =  which(LD==min(abs(LD)), arr.ind=T) 
+#   #gwasCausal =;
+#   #eqtlCausal = minIndex[2];
+# } #else if (hard == T && coloc==T) {
+#   #diag(LD) = -0.00001
+#   #maxIndex =  which(LD==max(abs(LD)), arr.ind=T) 
+#   #gwasCausal = maxIndex[1];
+#   #eqtlCausal = maxIndex[1];
+# } #else {
+#   #minIndex =  which(LD==min(abs(LD)), arr.ind=T)
+#   #gwasCausal = minIndex[1];
+#   #eqtlCausal = minIndex[1];
+# }
+
+#This is where I select the causal variant - Here I use Farhad's method of selecting the SNP with max LD
+#I select the same variant to be causal in both GWAS and eQTL sets
+diag(LD) = -0.00001
+maxIndex = which(LD == max(abs(LD),na.rm=T), arr.ind=T) 
+write.table(maxIndex, "casual.txt")
+gwasCausal = maxIndex[1];
+eqtlCausal = maxIndex[1];
+diag(LD) = 1;
+causal = rep(0, nSNP);
+
+##Simulate the GWAS statistics
+Ygwas = generate(Xgwas,gwasCausal);
+causal[gwasCausal] = 1;
+
+write.table(causal,file="gwas.causal",sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE);
+
+##Simulate the eQTL statistics
+Yeqtl = generate(Xgwas,eqtlCausal);
+causal[gwasCausal] = 0;
+causal[eqtlCausal] = 1;
+
+write.table(causal, file= "eqtl.causal", sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE);
+
+Ygwas<-standardize(Ygwas);
+Yeqtl<-standardize(Yeqtl);
+
+##Simulate the GWAS and eQTL statistics
+gwas<-myLM(Ygwas, Xgwas);
+eqtl<-myLM(Yeqtl, Xeqtl);
+gwasF <- gwas$Fscore;
+eqtlF <- eqtl$Fscore;
+
+#savegwasF
+write.table(cbind(SNPids, gwasF), file="gwasFscore.txt", 
+            sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE);
+#saveeqtlF
+write.table(cbind(SNPids, eqtlF), file="eqtlFscore.txt", 
+            sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE); 
+
+
+# #RTC rank the value after you regress out the snp you like
+# RTC <- rep(0,nSNP);
+# for(snpIndex in 1:nSNP){
+#   stat = pval <- rep(0,nSNP);
+#   for(tmpIndex in 1:nSNP){
+#     model = lm(Yeqtl~X[,tmpIndex]+X[,snpIndex])
+#     pval[tmpIndex] = coef(summary(model))[,4][2]
+#     stat[tmpIndex] = coef(summary(model))[,3][2];
+#   }
+#   index = rank(abs(stat))[snpIndex]
+#   RTC[snpIndex] = (nSNP-index)/nSNP;
+# }
+# cat(RTC)
+# head(pval)
+# #RUN COLOC    
+# colRes <- coloc.abf(dataset1=list(N=nInd/2, beta=gwas$beta, varbeta=gwas$sdbeta,type="quant"), 
+#                     dataset2=list(N=nInd/2, beta=eqtl$beta, varbeta=eqtl$sdbeta,type="quant"), MAF=maf1)
+
+# #save coloc results
+# coloSNP = colRes$results
+# index = order(strtoi(gsub("SNP.","", coloSNP$snp)))
+# write.table(cbind(coloSNP$snp[index], coloSNP$SNP.PP.H4[index]), file=paste(outputFileName, "snp.coloc", sep=""), sep=" ",row.names = FALSE, col.names = FALSE,quote = FALSE)
+# #write.table(cbind(coloSNP$snp[index], coloSNP$SNP.PP.H4[index]), file=paste(outputFileName, "loci.coloc", sep=""), sep="\t",row.names = FALSE, col.names = FALSE,quote = FALSE)
+
