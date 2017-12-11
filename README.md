@@ -1,5 +1,7 @@
 # GWAS-EQTL
-analysis for UCSF BMI 206 based on Hormozdiari et al (2016) Am J Hum Genet "Colocalization of GWAS and eQTL Signals Detects Target Genes." 
+## analysis for UCSF BMI 206 based on Hormozdiari et al (2016) Am J Hum Genet "Colocalization of GWAS and eQTL Signals Detects Target Genes." 
+
+### more information: 
 
 Final slides detailing our eQTL and GWAS summary statistics simulations can be found [here](https://docs.google.com/presentation/d/1W1L-j3bSCBnVC9vvl2Jzrpml5Mk0cQeGVaHCyal1qTw/edit?usp=sharing) 
 
